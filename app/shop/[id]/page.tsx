@@ -11,15 +11,12 @@ export default async function ShopPage(props: { params: Promise<{ id: string }> 
   const { id } = await props.params
   const supabase = await createClient()
 
-  // Safe fetch for shop name
-  let shopNameAr = 'المتجر'
-  let shopNameFr = 'Boutique'
+  let shopName = 'المتجر / Boutique'
   
   try {
-    const { data } = await supabase.from('shops').select('name, name_ar, name_fr').eq('id', id).single()
-    if (data) {
-      shopNameAr = data.name_ar || data.name
-      shopNameFr = data.name_fr || data.name
+    const { data } = await supabase.from('shops').select('shop_name').eq('id', id).single()
+    if (data && data.shop_name) {
+      shopName = data.shop_name
     }
   } catch (e) {
     // fallback if table is missing or RLS blocks
@@ -46,8 +43,7 @@ export default async function ShopPage(props: { params: Promise<{ id: string }> 
           <ChevronLeft size={28} className="mr-1" />
         </Link>
         <div className="flex flex-col items-center flex-1 pr-12">
-          <h1 className="text-2xl font-black drop-shadow-sm" dir="rtl">{shopNameAr}</h1>
-          <h2 className="text-sm font-medium opacity-80 mt-1">{shopNameFr}</h2>
+          <h1 className="text-xl font-black drop-shadow-sm line-clamp-2 text-center" dir="rtl">{shopName}</h1>
         </div>
       </header>
       

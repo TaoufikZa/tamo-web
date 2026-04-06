@@ -2,14 +2,16 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { Store, MapPinOff, Loader2, RefreshCw } from 'lucide-react';
+import { Store, MapPinOff, Loader2, RefreshCw, MapPin } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
+import { MapModal } from './components/MapModal';
 
 type Shop = {
   id: string;
-  name: string;
-  name_ar?: string;
-  name_fr?: string;
+  shop_name: string;
+  lat: number | null;
+  lng: number | null;
+  image_url: string | null;
 };
 
 type LocationState = {
@@ -25,6 +27,8 @@ export default function HomeClient() {
     status: 'idle',
   });
   
+  const [addressName, setAddressName] = useState('...');
+  const [isMapOpen, setIsMapOpen] = useState(false);
   const [shops, setShops] = useState<Shop[]>([]);
   const [isFetchingShops, setIsFetchingShops] = useState(false);
   const supabase = createClient();
@@ -34,7 +38,8 @@ export default function HomeClient() {
     try {
       const { data, error } = await supabase
         .from('shops')
-        .select('id, name, name_ar, name_fr');
+        .select('id, shop_name, lat, lng, image_url')
+        .eq('status', 'active');
         
       if (!error && data) {
         setShops(data);
@@ -46,6 +51,18 @@ export default function HomeClient() {
     }
   }, [supabase]);
 
+  const reverseGeocode = async (lat: number, lng: number) => {
+    setAddressName('جاري البحث...');
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`);
+      const data = await res.json();
+      const simpleAddress = data?.address?.road || data?.address?.suburb || data?.address?.city || 'موقع غير معروف';
+      setAddressName(simpleAddress);
+    } catch (e) {
+      setAddressName('موقع غير معروف');
+    }
+  };
+
   const requestLocation = useCallback(() => {
     setLocation(prev => ({ ...prev, status: 'loading' }));
     
@@ -56,11 +73,10 @@ export default function HomeClient() {
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        setLocation({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-          status: 'granted',
-        });
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        setLocation({ lat, lng, status: 'granted' });
+        reverseGeocode(lat, lng);
         fetchShops();
       },
       (error) => {
@@ -75,12 +91,18 @@ export default function HomeClient() {
     requestLocation();
   }, [requestLocation]);
 
+  const handleManualLocationConfirm = (lat: number, lng: number) => {
+    setIsMapOpen(false);
+    setLocation({ lat, lng, status: 'granted' });
+    reverseGeocode(lat, lng);
+    fetchShops(); // refetch nearby shops if they depend on distance in the future
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-[#0b0c10] font-sans pb-10">
       {/* Header aligned with design system */}
-      <header className="bg-tamo-green text-white pt-14 pb-5 px-6 rounded-b-[2.5rem] shadow-md z-10 sticky top-0">
+      <header className="bg-[#01432A] text-white pt-14 pb-5 px-6 rounded-b-[2.5rem] shadow-md z-10 sticky top-0 border-b border-[#015132]/50">
         <div className="max-w-md mx-auto w-full flex flex-col items-center gap-1">
-          {/* Logo representation */}
           <div className="flex items-end tracking-tighter justify-center font-black text-5xl text-[#a3ff12]">
             tamo
           </div>
@@ -90,11 +112,33 @@ export default function HomeClient() {
         </div>
       </header>
 
-      <main className="flex-1 w-full max-w-md mx-auto px-5 pt-8 flex flex-col">
+      <main className="flex-1 w-full max-w-md mx-auto px-5 pt-6 flex flex-col relative">
+        
+        {/* Dynamic Location Bar */}
+        {location.status === 'granted' && (
+          <div className="mb-6 bg-white dark:bg-[#1a1c23] p-4 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+            <button 
+               onClick={() => setIsMapOpen(true)}
+               className="text-xs font-bold bg-zinc-100 dark:bg-zinc-800 px-3 py-1.5 rounded-full text-zinc-600 dark:text-zinc-300 active:scale-95 transition-transform"
+            >
+              تغيير / Modifier
+            </button>
+            <div className="flex items-center gap-3">
+               <div className="flex flex-col items-end">
+                  <span className="text-[10px] uppercase font-bold text-zinc-400">الموقع الحالي</span>
+                  <span className="font-bold text-sm text-[#01432A] dark:text-[#2db37b] max-w-[150px] truncate" dir="rtl">{addressName}</span>
+               </div>
+               <div className="w-10 h-10 bg-[#01432A]/10 dark:bg-[#2db37b]/20 rounded-full flex items-center justify-center text-[#01432A] dark:text-[#2db37b]">
+                  <MapPin size={20} />
+               </div>
+            </div>
+          </div>
+        )}
+
         {/* State: Loading Location */}
         {location.status === 'loading' && (
-          <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <Loader2 className="animate-spin text-tamo-green" size={40} />
+          <div className="flex flex-col items-center justify-center py-20 gap-4 mt-10">
+            <Loader2 className="animate-spin text-[#01432A]" size={40} />
             <div className="text-center space-y-1">
               <h2 className="text-lg font-bold text-zinc-800 dark:text-zinc-200" dir="rtl">
                 جاري تحديد الموقع...
@@ -108,7 +152,7 @@ export default function HomeClient() {
 
         {/* State: Location Denied / Error */}
         {location.status === 'denied' && (
-          <div className="flex flex-col items-center justify-center py-16 gap-6 bg-white dark:bg-[#1a1c23] rounded-3xl p-6 shadow-sm border border-zinc-100">
+          <div className="flex flex-col items-center justify-center py-16 gap-6 bg-white dark:bg-[#1a1c23] rounded-3xl p-6 shadow-sm border border-zinc-100 dark:border-zinc-800/50 mt-10">
             <div className="w-20 h-20 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center text-red-500">
               <MapPinOff size={36} />
             </div>
@@ -123,7 +167,7 @@ export default function HomeClient() {
             
             <button 
               onClick={requestLocation}
-              className="mt-4 flex items-center gap-2 bg-tamo-green hover:bg-[#013520] transition-colors text-white px-8 py-3.5 rounded-2xl font-bold shadow-md shadow-tamo-green/20"
+              className="mt-4 flex items-center gap-2 bg-[#01432A] hover:bg-[#013520] transition-colors text-white px-8 py-3.5 rounded-2xl font-bold shadow-md shadow-[#01432A]/20"
             >
               <RefreshCw size={18} />
               <span>إعادة المحاولة / Réessayer</span>
@@ -134,7 +178,7 @@ export default function HomeClient() {
         {/* State: Location Granted */}
         {location.status === 'granted' && (
           <>
-            <div className="mb-5 flex flex-col text-right items-end w-full px-2">
+            <div className="mb-4 flex flex-col text-right items-end w-full px-2">
               <h2 className="text-2xl font-black text-zinc-900 dark:text-zinc-100" dir="rtl">متاجر قريبة</h2>
               <h2 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400 mt-1">Boutiques à proximité</h2>
             </div>
@@ -150,24 +194,28 @@ export default function HomeClient() {
                     href={`/shop/${shop.id}?lat=${location.lat}&lng=${location.lng}`} 
                     key={shop.id}
                   >
-                    <div className="bg-white dark:bg-[#1a1c23] p-5 rounded-xl shadow-sm border border-zinc-100/80 dark:border-zinc-800/50 flex items-center justify-between active:scale-[0.98] transition-all hover:shadow-md">
-                      <div className="w-14 h-14 bg-zinc-50/80 dark:bg-zinc-800/50 rounded-xl flex items-center justify-center shrink-0 border border-zinc-100">
-                         <Store className="text-tamo-green/70" size={24} />
+                    <div className="bg-white dark:bg-[#1a1c23] p-4 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 flex items-center justify-between active:scale-[0.98] transition-all hover:shadow-md h-24">
+                      
+                      {/* Image or Fallback Store Icon */}
+                      <div className="w-16 h-16 bg-zinc-50 dark:bg-zinc-800/80 rounded-xl flex items-center justify-center shrink-0 border border-zinc-100 dark:border-zinc-800 overflow-hidden shadow-inner">
+                         {shop.image_url ? (
+                           <img src={shop.image_url} alt={shop.shop_name} className="w-full h-full object-cover" />
+                         ) : (
+                           <Store className="text-[#01432A]/50 dark:text-[#2db37b]/50" size={28} />
+                         )}
                       </div>
-                      <div className="flex-1 px-4 flex flex-col items-end">
-                        <h3 className="font-bold text-lg text-zinc-900 dark:text-zinc-100" dir="rtl">
-                          {shop.name_ar || shop.name}
+
+                      <div className="flex-1 px-4 flex flex-col items-end justify-center h-full">
+                        <h3 className="font-bold text-lg text-zinc-900 dark:text-zinc-100 line-clamp-2 leading-tight" dir="rtl">
+                          {shop.shop_name}
                         </h3>
-                        <h4 className="text-xs font-semibold tracking-wide uppercase text-zinc-400 mt-0.5">
-                          {shop.name_fr || shop.name}
-                        </h4>
                       </div>
                     </div>
                   </Link>
                 ))
               ) : (
-                <div className="text-center py-10 bg-white rounded-2xl border border-dashed border-zinc-200">
-                   <p className="text-zinc-500 font-medium pb-1" dir="rtl">لا توجد متاجر حالياً</p>
+                <div className="text-center py-10 bg-white dark:bg-[#1a1c23] rounded-2xl border border-dashed border-zinc-200 dark:border-zinc-800 mt-2">
+                   <p className="text-zinc-500 font-medium pb-1" dir="rtl">لا توجد متاجر نشطة حالياً</p>
                    <p className="text-zinc-400 text-sm">Aucune boutique pour le moment</p>
                 </div>
               )}
@@ -175,6 +223,14 @@ export default function HomeClient() {
           </>
         )}
       </main>
+
+      <MapModal 
+        isOpen={isMapOpen} 
+        initialLat={location.lat} 
+        initialLng={location.lng} 
+        onConfirm={handleManualLocationConfirm} 
+        onCancel={() => setIsMapOpen(false)} 
+      />
     </div>
   );
 }
