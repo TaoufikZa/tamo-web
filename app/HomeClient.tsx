@@ -18,7 +18,7 @@ type LocationState = {
   status: 'idle' | 'loading' | 'granted' | 'denied';
 };
 
-export function ClientHome() {
+export default function HomeClient() {
   const [location, setLocation] = useState<LocationState>({
     lat: null,
     lng: null,

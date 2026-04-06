@@ -1,23 +1,22 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { ClientHome } from './components/ClientHome'
+import HomeClient from './HomeClient'
 
-export default async function Page(props: { searchParams: Promise<{ token?: string }> }) {
+export default async function HomePage(props: { searchParams: Promise<{ token?: string }> }) {
   const { token } = await props.searchParams;
 
-  // Intercept inbound tokens
+  // CRITICAL: We must intercept the token here since we deleted middleware!
   if (token) {
     redirect(`/api/auth?token=${token}`);
   }
 
-  // Session gatekeeper
-  const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get('tamo_session');
+  // Enforce session security
+  const cookieStore = await cookies()
+  const sessionCookie = cookieStore.get('tamo_session')
 
   if (!sessionCookie?.value) {
-    redirect('/unauthorized');
+    redirect('/unauthorized')
   }
-
-  // Safe to render for validated users
-  return <ClientHome />;
+  
+  return <HomeClient />
 }
