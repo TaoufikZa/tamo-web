@@ -1,7 +1,9 @@
-import { CheckCircle2, ChevronRight } from 'lucide-react'
+import { CheckCircle2, ChevronRight, MapPin, Search } from 'lucide-react'
 import Link from 'next/link'
 
-export default function SuccessPage() {
+export default async function SuccessPage(props: { searchParams: Promise<{ orderId?: string }> }) {
+  const { orderId } = await props.searchParams;
+  
   return (
     <div className="flex flex-col flex-1 items-center justify-center min-h-screen bg-[#01432A] text-white font-sans p-6">
       <main className="flex w-full max-w-md flex-col items-center text-center gap-10">
@@ -18,20 +20,41 @@ export default function SuccessPage() {
             تم إرسال طلبك بنجاح!
           </h1>
           <p className="text-lg font-medium text-white/80" dir="rtl">
-            سيتم إعلامك بالتكلفة قريباً.
+            المرجو تتبع حالة طلبك للحصول على السعر.
           </p>
         </div>
 
-        <div className="w-16 h-px bg-white/20" />
+        {/* Dynamic Tracking Link */}
+        {orderId ? (
+          <Link 
+            href={`/order/${orderId}`} 
+            className="w-full bg-[#a3ff12] hover:bg-[#baff4d] text-[#01432A] py-5 rounded-3xl font-black text-xl flex items-center justify-center gap-3 shadow-2xl active:scale-95 transition-all"
+          >
+            <span dir="rtl">تتبع طلبي</span>
+            <Search size={24} />
+          </Link>
+        ) : (
+          <div className="w-16 h-px bg-white/20" />
+        )}
 
         <div className="space-y-4">
           <h2 className="text-2xl font-bold">
             Votre commande a été envoyée avec succès !
           </h2>
           <p className="text-base text-white/80">
-            Vous serez bientôt informé du coût.
+            Veuillez suivre l'état de votre commande pour voir le prix.
           </p>
         </div>
+
+        {orderId && (
+          <Link 
+            href={`/order/${orderId}`} 
+            className="flex items-center gap-2 text-white font-bold underline opacity-80"
+          >
+            Suivre ma commande
+            <ChevronRight size={18} />
+          </Link>
+        )}
 
         <Link 
           href="/" 

@@ -122,8 +122,8 @@ export function VoiceRecorder({ shopId, customerId }: { shopId: string, customer
         .from('orders-audio')
         .getPublicUrl(fileName)
 
-      // 3. Insert into orders
-      const { error: insertError } = await supabase
+      // 3. Insert into orders and get the ID
+      const { data: newOrder, error: insertError } = await supabase
         .from('orders')
         .insert({
           customer_id: customerId,
@@ -133,16 +133,18 @@ export function VoiceRecorder({ shopId, customerId }: { shopId: string, customer
           customer_lat: location?.lat || null,
           customer_lng: location?.lng || null
         })
+        .select('id')
+        .single()
 
-      if (insertError) {
+      if (insertError || !newOrder) {
         console.warn("DB Insert failed", insertError)
         setIsUploading(false)
         alert("حدث خطأ أثناء الحفظ في قاعدة البيانات.\\nErreur de base de données.")
         return;
       }
 
-      // 4. Redirect to success
-      router.push('/success')
+      // 4. Redirect to success with the orderId
+      router.push(`/success?orderId=${newOrder.id}`)
     } catch (error) {
       console.error("Upload process error", error)
       setIsUploading(false)
