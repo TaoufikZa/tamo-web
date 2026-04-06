@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Mic, Square, Loader2, Send } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '../../../../utils/supabase/client'
+import { createClient } from '@/utils/supabase/client'
 
 export function VoiceRecorder({ shopId, customerId }: { shopId: string, customerId: any }) {
   const [isRecording, setIsRecording] = useState(false)
