@@ -25,15 +25,19 @@ export default async function ShopPage(props: { params: Promise<{ id: string }> 
     // fallback if table is missing or RLS blocks
   }
 
-  // Get customer_id from cookie
+  // Get customer_id from cookie & Enforce Auth Gate
   const cookieStore = await cookies()
   const sessionCookie = cookieStore.get('tamo_session')
-  let customerId = null
-  if (sessionCookie) {
-    try {
-      customerId = JSON.parse(sessionCookie.value).customer_id
-    } catch (e) {}
+  
+  if (!sessionCookie?.value) {
+    import('next/navigation').then(m => m.redirect('/unauthorized'));
+    return null; // unreachable due to redirect
   }
+
+  let customerId = null
+  try {
+    customerId = JSON.parse(sessionCookie.value).customer_id
+  } catch (e) {}
 
   return (
     <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-[#0b0c10] font-sans pb-10">
