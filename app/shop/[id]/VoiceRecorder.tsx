@@ -78,7 +78,7 @@ export function VoiceRecorder({ shopId, customerId }: { shopId: string, customer
       // 2. Upload to storage
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.webm`
       const { error: uploadError } = await supabase.storage
-        .from('orders')
+        .from('orders-audio')
         .upload(fileName, blob, { contentType: 'audio/webm' })
 
       if (uploadError) {
@@ -87,7 +87,7 @@ export function VoiceRecorder({ shopId, customerId }: { shopId: string, customer
       }
 
       const { data: publicUrlData } = supabase.storage
-        .from('orders')
+        .from('orders-audio')
         .getPublicUrl(fileName)
 
       // 3. Insert into orders
@@ -98,8 +98,8 @@ export function VoiceRecorder({ shopId, customerId }: { shopId: string, customer
           shop_id: shopId,
           audio_url: publicUrlData.publicUrl,
           status: 'pending',
-          lat: location?.lat || null,
-          lng: location?.lng || null
+          customer_lat: location?.lat || null,
+          customer_lng: location?.lng || null
         })
 
       if (insertError) {
