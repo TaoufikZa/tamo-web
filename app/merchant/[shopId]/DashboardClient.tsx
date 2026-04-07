@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
-import { CheckCircle2, ChevronLeft, MapPin, Play, Square, X, User, XCircle, Send } from 'lucide-react';
+import { useEffect, useState, useRef, useCallback } from 'react';
+import { CheckCircle2, ChevronLeft, MapPin, Play, Square, X, User, XCircle, Send, Calendar } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { PricingKeypad } from './PricingKeypad';
 
@@ -20,17 +20,65 @@ type Order = {
   };
 };
 
+type TimeFilter = 'today' | 'yesterday' | '7days' | '3months';
+
 export function DashboardClient({ shopId }: { shopId: string }) {
   const [activeTab, setActiveTab] = useState<'pending' | 'history'>('pending');
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>('today');
+  
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [priceInput, setPriceInput] = useState('');
+  const [isFetching, setIsFetching] = useState(false);
   
   const [isSuccess, setIsSuccess] = useState(false);
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
   
   const supabase = createClient();
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const getDateBoundaries = (filter: TimeFilter) => {
+    let start = new Date();
+    let end = new Date();
+  
+    switch(filter) {
+      case 'today':
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
+        break;
+      case 'yesterday':
+        start.setDate(start.getDate() - 1);
+        start.setHours(0, 0, 0, 0);
+        end.setDate(end.getDate() - 1);
+        end.setHours(23, 59, 59, 999);
+        break;
+      case '7days':
+        start.setDate(start.getDate() - 7);
+        break;
+      case '3months':
+        start.setDate(start.getDate() - 90);
+        break;
+    }
+    return { startDate: start, endDate: end };
+  };
+
+  const fetchOrders = useCallback(async () => {
+    setIsFetching(true);
+    const { startDate, endDate } = getDateBoundaries(timeFilter);
+
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*, customers(whatsapp_name)')
+      .eq('shop_id', shopId)
+      .gte('created_at', startDate.toISOString())
+      .lte('created_at', endDate.toISOString())
+      .order('created_at', { ascending: false });
+
+    if (!error && data) {
+      setOrders(data as unknown as Order[]);
+    }
+    setIsFetching(false);
+  }, [shopId, supabase, timeFilter]);
 
   useEffect(() => {
     fetchOrders();
@@ -50,22 +98,7 @@ export function DashboardClient({ shopId }: { shopId: string }) {
         audioRef.current.pause();
       }
     };
-  }, [shopId, supabase]);
-
-  const fetchOrders = async () => {
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
-
-    const { data, error } = await supabase
-      .from('orders')
-      .select('*, customers(whatsapp_name)')
-      .eq('shop_id', shopId)
-      .order('created_at', { ascending: false });
-
-    if (!error && data) {
-      setOrders(data as unknown as Order[]);
-    }
-  };
+  }, [fetchOrders, shopId, supabase]);
 
   const handlePlayToggle = (orderId: string, audioUrl: string) => {
     if (playingAudioId === orderId && audioRef.current) {
@@ -116,6 +149,16 @@ export function DashboardClient({ shopId }: { shopId: string }) {
     setPriceInput('');
     if (audioRef.current) audioRef.current.pause();
     setPlayingAudioId(null);
+  };
+
+  const formatOrderDate = (isoString: string) => {
+    const d = new Date(isoString);
+    return d.toLocaleString('en-GB', { 
+      day: '2-digit', 
+      month: 'short', 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
   };
 
   // SUCCESS OVERLAY
@@ -235,10 +278,27 @@ export function DashboardClient({ shopId }: { shopId: string }) {
 
   return (
     <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-[#0b0c10] font-sans">
-      <header className="bg-[#062C1E] text-white pt-16 pb-0 px-6 shadow-md z-10 sticky top-0 rounded-b-[2rem]">
-        <div className="flex items-center justify-between mb-8">
-           <div className="text-xs font-bold text-lime-400 bg-lime-400/10 px-3 py-1.5 rounded-full tracking-widest uppercase">Hanout Dashboard</div>
+      <header className="bg-[#062C1E] text-white pt-14 pb-0 px-6 shadow-md z-10 sticky top-0 rounded-b-[2rem]">
+        <div className="flex items-center justify-between mb-6">
            <div className="text-xl font-black tracking-tighter">tamo</div>
+           
+           {/* Top Navigation Dropdown Filter */}
+           <div className="relative">
+             <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+               <Calendar size={16} className="text-[#062C1E]" />
+             </div>
+             <select
+               value={timeFilter}
+               onChange={(e) => setTimeFilter(e.target.value as TimeFilter)}
+               className="appearance-none bg-lime-400 font-bold text-[#062C1E] rounded-full py-2 pl-4 pr-10 text-sm shadow-sm outline-none focus:ring-2 focus:ring-white transition-all w-[150px] text-right"
+               dir="rtl"
+             >
+               <option value="today">اليوم / Aujourd'hui</option>
+               <option value="yesterday">الأمس / Hier</option>
+               <option value="7days">آخر 7 أيام / 7 Jours</option>
+               <option value="3months">آخر 3 أشهر / 3 Mois</option>
+             </select>
+           </div>
         </div>
 
         <div className="flex w-full">
@@ -258,11 +318,15 @@ export function DashboardClient({ shopId }: { shopId: string }) {
       </header>
 
       <main className="flex-1 w-full max-w-md mx-auto p-4 flex flex-col gap-4 mt-4">
-        {displayOrders.length === 0 ? (
+        {isFetching ? (
+           <div className="flex items-center justify-center py-20 text-zinc-400 animate-pulse">
+              <span className="font-bold">جاري التحميل...</span>
+           </div>
+        ) : displayOrders.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-zinc-400">
              <CheckCircle2 size={64} className="opacity-20 mb-4" />
-             <p className="font-bold">لا يوجد أي شيء هنا</p>
-             <p className="text-sm">Tout est à jour</p>
+             <p className="font-bold text-center" dir="rtl">لا توجد معاملات لهذه الفترة</p>
+             <p className="text-sm">Aucune transaction pour cette période</p>
           </div>
         ) : (
           displayOrders.map((order) => (
@@ -280,8 +344,8 @@ export function DashboardClient({ shopId }: { shopId: string }) {
 
                <div className="flex-1 flex flex-col items-end pr-2 overflow-hidden">
                  <div className="flex items-center justify-between w-full mb-1">
-                   <span className="text-[10px] uppercase font-bold tracking-widest text-zinc-400">
-                     {new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                   <span className="text-[10px] uppercase font-bold tracking-widest text-[#01432A]/70 dark:text-lime-400/70">
+                     {formatOrderDate(order.created_at)}
                    </span>
                    <span className="font-black text-lg text-zinc-900 dark:text-zinc-100 truncate w-[140px] text-right" dir="rtl">
                      {order.customers?.whatsapp_name}
