@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { MapPin, Navigation } from 'lucide-react';
+import { MapPin, Navigation, LocateFixed, Loader2 } from 'lucide-react';
 
 const createCustomIcon = () => {
   const div = document.createElement('div');
@@ -32,6 +32,56 @@ function LocationMarker({ position, setPosition }: { position: [number, number],
   return position ? <Marker position={position} icon={createCustomIcon()} /> : null;
 }
 
+function LocateMeBtn({ setPosition }: { setPosition: (pos: [number, number]) => void }) {
+  const map = useMap();
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const handleLocate = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setLoading(true);
+    setErrorMsg('');
+    
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      setErrorMsg('Location API not supported.');
+      setLoading(false);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const latlng: [number, number] = [pos.coords.latitude, pos.coords.longitude];
+        setPosition(latlng);
+        // Smoothly pan to new location
+        map.flyTo(latlng, 16, { animate: true, duration: 1.5 });
+        setLoading(false);
+      },
+      (err) => {
+        setErrorMsg('Location permission denied. Please drag the pin manually.');
+        setLoading(false);
+        setTimeout(() => setErrorMsg(''), 5000);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
+  return (
+    <div className="absolute bottom-[110px] right-5 z-[500] flex flex-col items-end gap-2 pointer-events-none">
+      {errorMsg && (
+        <div className="bg-red-50 text-red-600 px-3 py-2 rounded-lg text-xs font-bold shadow-md border border-red-100 max-w-[200px] text-right pointer-events-auto transition-opacity" dir="rtl">
+          {errorMsg}
+        </div>
+      )}
+      <button 
+        onClick={handleLocate}
+        className="w-14 h-14 bg-white rounded-full flex items-center justify-center text-[#01432A] shadow-xl hover:bg-zinc-50 active:scale-95 transition-all outline-none border border-zinc-100 pointer-events-auto"
+      >
+        {loading ? <Loader2 className="animate-spin text-[#01432A]" size={24} /> : <LocateFixed size={26} />}
+      </button>
+    </div>
+  );
+}
+
 export default function Map({ 
   initialLat, 
   initialLng,
@@ -56,6 +106,7 @@ export default function Map({
           url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
         />
         <LocationMarker position={position} setPosition={setPosition} />
+        <LocateMeBtn setPosition={setPosition} />
       </MapContainer>
       
       {/* Absolute Header Overlay Hint */}
