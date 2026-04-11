@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { Store, MapPinOff, Loader2, RefreshCw, MapPin } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
@@ -31,6 +31,9 @@ export default function HomeClient() {
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [shops, setShops] = useState<Shop[]>([]);
   const [isFetchingShops, setIsFetchingShops] = useState(false);
+  const [isRequestingLocation, setIsRequestingLocation] = useState(false);
+  
+  const initialized = useRef(false);
   const supabase = createClient();
 
   const fetchShops = useCallback(async () => {
@@ -63,11 +66,16 @@ export default function HomeClient() {
     }
   };
 
-  const requestLocation = useCallback(() => {
-    setLocation(prev => ({ ...prev, status: 'loading' }));
+  const requestLocation = useCallback((showButtonSpinner = false) => {
+    if (showButtonSpinner) {
+      setIsRequestingLocation(true);
+    } else {
+      setLocation(prev => ({ ...prev, status: 'loading' }));
+    }
     
     if (typeof navigator === "undefined" || !navigator.geolocation) {
       setLocation(prev => ({ ...prev, status: 'denied' }));
+      setIsRequestingLocation(false);
       return;
     }
 
@@ -76,26 +84,46 @@ export default function HomeClient() {
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
         setLocation({ lat, lng, status: 'granted' });
+        localStorage.setItem('tamo_location', JSON.stringify({ lat, lng }));
         reverseGeocode(lat, lng);
         fetchShops();
+        setIsRequestingLocation(false);
       },
       (error) => {
         console.error('Geolocation error:', error);
         setLocation(prev => ({ ...prev, status: 'denied' }));
+        setIsRequestingLocation(false);
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   }, [fetchShops]);
 
   useEffect(() => {
-    requestLocation();
-  }, [requestLocation]);
+    if (initialized.current) return;
+    initialized.current = true;
+
+    // Check persistence first
+    const cachedLoc = localStorage.getItem('tamo_location');
+    if (cachedLoc) {
+      try {
+        const { lat, lng } = JSON.parse(cachedLoc);
+        setLocation({ lat, lng, status: 'granted' });
+        reverseGeocode(lat, lng);
+        fetchShops();
+      } catch (e) {
+        requestLocation();
+      }
+    } else {
+      requestLocation();
+    }
+  }, [requestLocation, fetchShops]);
 
   const handleManualLocationConfirm = (lat: number, lng: number) => {
     setIsMapOpen(false);
     setLocation({ lat, lng, status: 'granted' });
+    localStorage.setItem('tamo_location', JSON.stringify({ lat, lng }));
     reverseGeocode(lat, lng);
-    fetchShops(); // refetch nearby shops if they depend on distance in the future
+    fetchShops(); 
   };
 
   return (
@@ -164,13 +192,32 @@ export default function HomeClient() {
                 Veuillez activer la localisation pour voir les boutiques à proximité.
               </p>
             </div>
+
+            <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/30 rounded-xl p-3 text-center">
+               <p className="text-xs text-amber-800 dark:text-amber-400 font-bold" dir="rtl">
+                 💡 تلميح: انقر على أيقونة القفل 🔒 في شريط العنوان أعلى المتصفح، ثم اسمح بالوصول إلى الموقع (Location).
+               </p>
+               <p className="text-[10px] text-amber-700/80 dark:text-amber-500/80 mt-1">
+                 Astuce : Cliquez sur l'icône de cadenas 🔒 dans la barre d'URL et autorisez la localisation.
+               </p>
+            </div>
             
             <button 
-              onClick={requestLocation}
-              className="mt-4 flex items-center gap-2 bg-[#01432A] hover:bg-[#013520] transition-colors text-white px-8 py-3.5 rounded-2xl font-bold shadow-md shadow-[#01432A]/20"
+              onClick={() => requestLocation(true)}
+              disabled={isRequestingLocation}
+              className="mt-4 flex items-center justify-center min-w-[200px] gap-2 bg-[#01432A] hover:bg-[#013520] transition-colors text-white px-8 py-4 rounded-2xl font-bold shadow-md shadow-[#01432A]/20 disabled:opacity-80 active:scale-95"
             >
-              <RefreshCw size={18} />
-              <span>إعادة المحاولة / Réessayer</span>
+              {isRequestingLocation ? (
+                <>
+                  <Loader2 className="animate-spin" size={20} />
+                  <span dir="rtl">جاري تحديد الموقع...</span>
+                </>
+              ) : (
+                <>
+                  <RefreshCw size={18} />
+                  <span>إعادة المحاولة / Réessayer</span>
+                </>
+              )}
             </button>
           </div>
         )}
