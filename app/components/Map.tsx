@@ -110,20 +110,23 @@ export default function Map({
       </MapContainer>
       
       {/* Absolute Header Overlay Hint */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[400] pointer-events-none">
-         <div className="bg-white/90 backdrop-blur-md px-6 py-3 rounded-full shadow-lg border border-zinc-100 flex items-center gap-2">
-           <span className="text-zinc-800 font-black text-sm" dir="rtl">اضغط على الخريطة لتغيير الموقع</span>
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[400] pointer-events-none w-full flex justify-center px-4">
+         <div className="bg-white px-6 py-4 rounded-3xl shadow-md border border-zinc-100 flex items-center justify-center min-w-[280px]">
+           <span className="text-zinc-900 font-bold text-sm text-center">اختر موقعك | Choisissez votre position</span>
          </div>
       </div>
 
       {/* Massive Bottom Sticky CTA */}
-      <div className="absolute bottom-0 left-0 right-0 z-[400] pb-8 pt-10 px-5 bg-gradient-to-t from-zinc-900/40 to-transparent pointer-events-none">
+      <div className="absolute bottom-0 left-0 right-0 z-[400] pb-8 pt-10 px-5 bg-gradient-to-t from-zinc-900/40 to-transparent pointer-events-none flex justify-center">
          <button 
            onClick={() => onConfirm(position[0], position[1])}
-           className="w-full h-16 bg-[#01432A] hover:bg-[#015132] shadow-2xl text-white rounded-3xl font-black text-xl flex items-center justify-center gap-3 active:scale-95 transition-all pointer-events-auto border-2 border-white/10"
+           className="w-full max-w-sm h-[72px] bg-[#062C1E] hover:bg-[#093c2a] shadow-2xl text-white rounded-full flex items-center justify-between px-8 active:scale-95 transition-transform pointer-events-auto"
          >
-           <span dir="rtl">تأكيد موقع التوصيل</span>
-           <Navigation size={24} className="fill-[#a3ff12] text-[#a3ff12]" />
+           <div className="flex flex-col items-start leading-tight">
+             <span className="font-bold text-lg" dir="rtl">تأكيد موقع التوصيل</span>
+             <span className="text-[10px] font-bold text-white/80">Confirmer la position</span>
+           </div>
+           <Navigation size={24} className="fill-[#a3ff12] text-[#a3ff12] rotate-[-45deg] scale-x-[-1]" />
          </button>
       </div>
     </div>
