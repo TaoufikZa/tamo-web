@@ -90,7 +90,7 @@ export default function RegisterClient() {
         finalImageUrl = publicURLData.publicUrl;
       }
 
-      const webhookUrl = process.env.NEXT_PUBLIC_N8N_SHOP_WEBHOOK || '';
+      const webhookUrl = process.env.NEXT_PUBLIC_N8N_SHOP_WEBHOOK || 'https://n8n.tamo.ma/webhook/register-hanout';
       const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
