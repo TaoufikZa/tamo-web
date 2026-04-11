@@ -20,14 +20,17 @@ import 'leaflet/dist/leaflet.css';
 
 // 1. Create a specialized Map component that handles all Leaflet logic internal to the client
 // We must dynamic import this entire thing to avoid SSR issues
-const DynamicRegisterMap = dynamic(() => import('./RegisterMap'), { 
-  ssr: false,
-  loading: () => (
-    <div className="w-full h-64 bg-[#F0F2F5] rounded-xl flex items-center justify-center animate-pulse">
-      <Loader2 className="animate-spin text-zinc-300" size={32} />
-    </div>
-  )
-});
+const DynamicRegisterMap = dynamic<{ coords: [number, number], setCoords: (c: [number, number]) => void }>(
+  () => import('./RegisterMap'), 
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-64 bg-[#F0F2F5] rounded-xl flex items-center justify-center animate-pulse">
+        <Loader2 className="animate-spin text-zinc-300" size={32} />
+      </div>
+    )
+  }
+);
 
 export default function RegisterClient() {
   const [step, setStep] = useState<'form' | 'success' | 'loading'>('form');
@@ -69,15 +72,20 @@ export default function RegisterClient() {
       if (imageFile) {
         const fileExt = imageFile.name.split('.').pop();
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `public/${fileName}`;
+
         const { error: uploadError } = await supabase.storage
           .from('shop-images')
-          .upload(fileName, imageFile);
+          .upload(filePath, imageFile, {
+            cacheControl: '3600',
+            upsert: false
+          });
 
         if (uploadError) throw new Error("Erreur lors de l'envoi de l'image.");
 
         const { data: publicURLData } = supabase.storage
           .from('shop-images')
-          .getPublicUrl(fileName);
+          .getPublicUrl(filePath);
         
         finalImageUrl = publicURLData.publicUrl;
       }
