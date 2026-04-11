@@ -120,13 +120,15 @@ export default function Map({
       <div className="absolute bottom-0 left-0 right-0 z-[400] pb-8 pt-10 px-5 bg-gradient-to-t from-zinc-900/40 to-transparent pointer-events-none flex justify-center">
          <button 
            onClick={() => onConfirm(position[0], position[1])}
-           className="w-full max-w-sm h-[72px] bg-[#062C1E] hover:bg-[#093c2a] shadow-2xl text-white rounded-full flex items-center justify-between px-8 active:scale-95 transition-transform pointer-events-auto"
+           className="relative w-full max-w-sm h-[72px] bg-[#062C1E] hover:bg-[#093c2a] shadow-2xl text-white rounded-full flex items-center justify-center active:scale-95 transition-transform pointer-events-auto"
          >
-           <div className="flex flex-col items-start leading-tight">
-             <span className="font-bold text-lg" dir="rtl">تأكيد موقع التوصيل</span>
-             <span className="text-[10px] font-bold text-white/80">Confirmer la position</span>
+           <div className="flex flex-col items-center justify-center leading-tight">
+             <span className="font-bold text-[19px]" dir="rtl">تأكيد موقع التوصيل</span>
+             <span className="text-[10px] font-bold text-[#a3ff12] uppercase tracking-[0.1em] mt-0.5">Confirmer la position</span>
            </div>
-           <Navigation size={24} className="fill-[#a3ff12] text-[#a3ff12] rotate-[-45deg] scale-x-[-1]" />
+           <div className="absolute right-6 flex items-center justify-center">
+             <Navigation size={22} className="fill-[#a3ff12] text-[#a3ff12] rotate-45" />
+           </div>
          </button>
       </div>
     </div>
