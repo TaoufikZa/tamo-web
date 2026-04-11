@@ -200,14 +200,14 @@ export function DashboardClient({ shopId }: { shopId: string }) {
     const isReady = parseFloat(priceInput) > 0;
     
     return (
-      <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-[#0b0c10] font-sans pb-10">
-        <header className="bg-white dark:bg-[#1a1c23] pt-14 pb-5 px-6 shadow-sm z-10 sticky top-0 flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800">
-          <button onClick={resetSelection} className="w-12 h-12 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center text-zinc-600 dark:text-zinc-300">
-            <X size={28} />
+      <div className="flex flex-col font-sans pb-10">
+        <header className="bg-white pt-4 pb-4 px-6 shadow-sm z-10 sticky top-[90px] flex items-center justify-between border-b border-zinc-100">
+          <button onClick={resetSelection} className="w-10 h-10 bg-[#F0F2F5] rounded-full flex items-center justify-center text-zinc-600">
+            <X size={24} />
           </button>
           <div className="flex flex-col items-end">
-            <h1 className="text-xl font-black text-zinc-900 dark:text-zinc-100" dir="rtl">معالجة الطلب</h1>
-            <p className="text-xs text-zinc-500 font-bold">Traitement de commande</p>
+            <h1 className="text-xl font-black text-zinc-900" dir="rtl">معالجة الطلب</h1>
+            <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Traitement de commande</p>
           </div>
         </header>
 
@@ -277,11 +277,9 @@ export function DashboardClient({ shopId }: { shopId: string }) {
   const displayOrders = activeTab === 'pending' ? pendingOrders : historyOrders;
 
   return (
-    <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-[#0b0c10] font-sans">
-      <header className="bg-[#062C1E] text-white pt-14 pb-0 px-6 shadow-md z-10 sticky top-0 rounded-b-[2rem]">
-        <div className="flex items-center justify-between mb-6">
-           <div className="text-xl font-black tracking-tighter">tamo</div>
-           
+    <div className="flex flex-col font-sans">
+      <header className="bg-[#062C1E] text-white pt-4 pb-0 px-6 shadow-md z-10 sticky top-[90px] rounded-b-[2rem] border-t border-[#015132]/20">
+        <div className="flex items-center justify-end mb-4">
            {/* Top Navigation Dropdown Filter */}
            <div className="relative">
              <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
@@ -290,13 +288,13 @@ export function DashboardClient({ shopId }: { shopId: string }) {
              <select
                value={timeFilter}
                onChange={(e) => setTimeFilter(e.target.value as TimeFilter)}
-               className="appearance-none bg-lime-400 font-bold text-[#062C1E] rounded-full py-2 pl-4 pr-10 text-sm shadow-sm outline-none focus:ring-2 focus:ring-white transition-all w-[150px] text-right"
+               className="appearance-none bg-lime-400 font-bold text-[#062C1E] rounded-full py-2 pl-4 pr-10 text-sm shadow-sm outline-none w-[170px] text-right"
                dir="rtl"
              >
-               <option value="today">اليوم / Aujourd'hui</option>
+               <option value="today">اليوم / Auj</option>
                <option value="yesterday">الأمس / Hier</option>
-               <option value="7days">آخر 7 أيام / 7 Jours</option>
-               <option value="3months">آخر 3 أشهر / 3 Mois</option>
+               <option value="7days">آخر 7 أيام / 7 j</option>
+               <option value="3months">آخر 3 أشهر / 3 m</option>
              </select>
            </div>
         </div>
@@ -333,7 +331,7 @@ export function DashboardClient({ shopId }: { shopId: string }) {
             <div 
               key={order.id} 
               onClick={() => activeTab === 'pending' && setSelectedOrder(order)}
-              className={`bg-white dark:bg-[#1a1c23] p-4 rounded-3xl shadow-sm border ${activeTab === 'pending' ? 'border-zinc-200 dark:border-zinc-800 cursor-pointer active:scale-[0.98]' : 'border-transparent opacity-80'} transition-transform flex items-center gap-4`}
+              className={`bg-white p-4 rounded-2xl shadow-sm border ${activeTab === 'pending' ? 'border-zinc-200 cursor-pointer active:scale-[0.98]' : 'border-transparent opacity-90'} transition-transform flex items-center gap-4`}
             >
                <button 
                   onClick={(e) => { e.stopPropagation(); handlePlayToggle(order.id, order.audio_url); }}

@@ -2,11 +2,10 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { Store, Loader2, MapPin } from 'lucide-react';
+import { Store, Loader2, MapPin, Navigation, Star } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import dynamic from 'next/dynamic';
 
-// Dynamic import the Map to bypass SSR
 const DynamicMap = dynamic(() => import('./components/Map'), { 
   ssr: false,
   loading: () => (
@@ -28,15 +27,39 @@ type Shop = {
 export default function HomeClient() {
   const [currentView, setCurrentView] = useState<'map' | 'shops' | 'loading'>('loading');
   
-  // Coordinates (default to Casablanca if nothing works)
   const [coords, setCoords] = useState<[number, number]>([33.5731, -7.5898]);
   const [addressName, setAddressName] = useState('...');
   
   const [shops, setShops] = useState<Shop[]>([]);
+  const [favorites, setFavorites] = useState<string[]>([]);
   const [isFetchingShops, setIsFetchingShops] = useState(false);
   
   const initialized = useRef(false);
   const supabase = createClient();
+
+  useEffect(() => {
+    // Load favorites from local storage
+    try {
+      const storedFavs = localStorage.getItem('tamo_favorites');
+      if (storedFavs) {
+        setFavorites(JSON.parse(storedFavs));
+      }
+    } catch(e) {}
+  }, []);
+
+  const toggleFavorite = (e: React.MouseEvent, shopId: string) => {
+    e.preventDefault(); // Prevent Link navigation
+    e.stopPropagation();
+    
+    setFavorites(prev => {
+      const newFavs = prev.includes(shopId) 
+        ? prev.filter(id => id !== shopId) 
+        : [...prev, shopId];
+      
+      localStorage.setItem('tamo_favorites', JSON.stringify(newFavs));
+      return newFavs;
+    });
+  };
 
   const reverseGeocode = async (lat: number, lng: number) => {
     setAddressName('جاري البحث...');
@@ -85,22 +108,19 @@ export default function HomeClient() {
       } catch (e) {}
     }
 
-    // 2. If nothing cached, try a silent geolocation snap just in case permissions are already granted
+    // 2. Default to map
     setCurrentView('map');
     if (typeof navigator !== "undefined" && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setCoords([position.coords.latitude, position.coords.longitude]);
         },
-        () => {
-          // Silent failure. We just leave it at Casablanca default.
-        },
+        () => {},
         { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 }
       );
     }
   }, [fetchShops]);
 
-  // When the user hits the primary sticky CTA on the map
   const confirmLocation = (lat: number, lng: number) => {
     setCoords([lat, lng]);
     localStorage.setItem('tamo_location', JSON.stringify({ lat, lng }));
@@ -110,102 +130,135 @@ export default function HomeClient() {
   };
 
   if (currentView === 'loading') {
-    return <div className="min-h-screen bg-zinc-50 dark:bg-[#0b0c10]" />;
+    return <div className="min-h-screen bg-[#F0F2F5]" />;
   }
 
+  // Derived state for shops
+  const favoriteShops = shops.filter(s => favorites.includes(s.id));
+  const normalShops = shops.filter(s => !favorites.includes(s.id));
+
   return (
-    <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-[#0b0c10] font-sans">
-      {/* Header */}
-      {currentView === 'shops' ? (
-        <header className="bg-[#01432A] text-white pt-14 pb-5 px-6 rounded-b-[2rem] shadow-md z-10 sticky top-0 flex items-center justify-between border-b border-[#015132]/50">
-           
-           <button 
-             onClick={() => setCurrentView('map')}
-             className="w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors shadow-inner backdrop-blur-sm"
-           >
-             <MapPin size={24} className="text-[#a3ff12]" />
-           </button>
-
-           <div className="flex flex-col items-end">
-             <div className="text-xl font-black tracking-tighter" dir="rtl">تأكيد الموقع</div>
-             <p className="text-[10px] font-bold tracking-widest uppercase text-white/70">Delivery Location</p>
-           </div>
-
-        </header>
-      ) : (
-        <header className="bg-[#01432A] text-white pt-14 pb-5 px-6 shadow-md z-10 sticky top-0 flex items-center justify-between">
-          <div className="text-xl font-black tracking-tighter text-[#a3ff12]">tamo</div>
-          <p className="text-sm font-bold tracking-wide text-zinc-100" dir="rtl">
-            حدد موقعك
-          </p>
-        </header>
-      )}
-
-      {/* Main View Area */}
+    <>
       {currentView === 'map' ? (
-        <main className="flex flex-col flex-1 relative w-full h-[calc(100vh-100px)]">
+        <div className="absolute inset-x-0 top-[90px] bottom-0 z-0">
            <DynamicMap 
              initialLat={coords[0]} 
              initialLng={coords[1]} 
              onConfirm={confirmLocation} 
            />
-        </main>
+        </div>
       ) : (
-        <main className="flex-1 w-full max-w-md mx-auto px-5 pt-6 flex flex-col pb-10 relative">
+        <div className="flex flex-col w-full px-4 pt-4 relative">
           
-          <div className="mb-6 bg-white dark:bg-[#1a1c23] p-4 rounded-3xl shadow-sm border border-zinc-100 dark:border-zinc-800 flex items-center justify-between relative overflow-hidden">
-             {/* Decorative Background */}
-             <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-[#a3ff12]/5 to-transparent pointer-events-none" />
-             
-             <div className="flex-1 px-2 overflow-hidden">
-                <span className="text-[10px] uppercase font-bold text-zinc-400">Position confirmée</span>
-                <p className="font-bold text-lg text-zinc-900 dark:text-zinc-100 truncate" dir="auto">{addressName}</p>
+          {/* Sub-Header Location Edit */}
+          <div className="mb-8 bg-white p-4 rounded-2xl shadow-sm flex items-center justify-between">
+             <button 
+               onClick={() => setCurrentView('map')}
+               className="text-xs font-bold bg-[#F0F2F5] px-4 py-2 rounded-xl text-zinc-600 active:scale-95 transition-transform uppercase tracking-wider"
+             >
+               Modifier
+             </button>
+             <div className="flex items-center gap-3">
+                <div className="flex flex-col items-end">
+                   <span className="font-bold text-sm text-[#062C1E] max-w-[150px] truncate" dir="rtl">{addressName}</span>
+                   <span className="text-[10px] uppercase font-bold text-zinc-400 tracking-widest mt-0.5">Adresse de livraison</span>
+                </div>
+                <div className="w-10 h-10 bg-[#062C1E] rounded-full flex items-center justify-center text-[#a3ff12] shadow-sm">
+                   <MapPin size={20} />
+                </div>
              </div>
           </div>
           
-          <div className="mb-4 flex flex-col text-right items-end w-full px-2">
-            <h2 className="text-3xl font-black text-zinc-900 dark:text-zinc-100 underline decoration-[#a3ff12] decoration-4 underline-offset-4" dir="rtl">متاجر قريبة</h2>
-            <h2 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400 mt-2">Boutiques à proximité</h2>
+          <div className="w-full text-right mb-4 pr-1">
+            <h2 className="text-xl font-bold text-zinc-800" dir="rtl">متاجر قريبة / Boutiques à proximité</h2>
           </div>
           
-          <div className="flex flex-col gap-4 mt-2">
+          <div className="w-full relative min-h-[300px]">
             {isFetchingShops ? (
-              <div className="flex justify-center py-10">
-                <Loader2 className="animate-spin text-[#01432A]" size={36} />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Loader2 className="animate-spin text-[#062C1E]" size={36} />
               </div>
             ) : shops.length > 0 ? (
-              shops.map((shop) => (
-                <Link 
-                  href={`/shop/${shop.id}?lat=${coords[0]}&lng=${coords[1]}`} 
-                  key={shop.id}
-                >
-                  <div className="bg-white dark:bg-[#1a1c23] p-4 rounded-3xl shadow-sm border border-zinc-100 dark:border-zinc-800 flex items-center justify-between active:scale-[0.98] transition-all hover:shadow-md h-[100px]">
-                    
-                    <div className="w-16 h-16 bg-zinc-50 dark:bg-zinc-800/80 rounded-2xl flex items-center justify-center shrink-0 border border-zinc-100 dark:border-zinc-800 overflow-hidden shadow-inner">
-                       {shop.image_url ? (
-                         <img src={shop.image_url} alt={shop.shop_name} className="w-full h-full object-cover" />
-                       ) : (
-                         <Store className="text-[#01432A]/50 dark:text-[#2db37b]/50" size={28} />
-                       )}
-                    </div>
+              <div className="space-y-6">
+                 
+                 {/* Favorites Row */}
+                 {favoriteShops.length > 0 && (
+                   <div className="grid grid-cols-2 gap-4">
+                     {favoriteShops.map((shop) => (
+                       <Link href={`/shop/${shop.id}?lat=${coords[0]}&lng=${coords[1]}`} key={shop.id}>
+                         <div className="bg-white rounded-2xl shadow-sm border border-transparent overflow-hidden active:scale-[0.98] transition-transform flex flex-col h-40 relative group">
+                           
+                           {/* Fav Star Absolute */}
+                           <button onClick={(e) => toggleFavorite(e, shop.id)} className="absolute top-2 right-2 z-10 w-8 h-8 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-sm">
+                              <Star size={18} className="fill-amber-400 text-amber-400" />
+                           </button>
 
-                    <div className="flex-1 px-4 flex flex-col items-end justify-center h-full">
-                      <h3 className="font-black text-xl text-zinc-900 dark:text-zinc-100 line-clamp-2 leading-tight" dir="rtl">
-                        {shop.shop_name}
-                      </h3>
-                    </div>
-                  </div>
-                </Link>
-              ))
+                           {/* Image Top Half */}
+                           <div className="h-20 w-full bg-zinc-100 flex items-center justify-center relative overflow-hidden shrink-0">
+                              {shop.image_url ? (
+                                <img src={shop.image_url} alt={shop.shop_name} className="w-full h-full object-cover" />
+                              ) : (
+                                <Store className="text-zinc-300" size={32} />
+                              )}
+                           </div>
+                           
+                           {/* Content Bottom Half */}
+                           <div className="flex flex-col p-3 flex-1 justify-center bg-white">
+                             <h3 className="font-bold text-base text-zinc-900 truncate" dir="rtl">
+                               {shop.shop_name}
+                             </h3>
+                             <p className="text-[10px] text-zinc-400 font-medium uppercase tracking-widest mt-1">Epicerie</p>
+                           </div>
+                         </div>
+                       </Link>
+                     ))}
+                   </div>
+                 )}
+
+                 {/* Divider if both exist */}
+                 {favoriteShops.length > 0 && normalShops.length > 0 && (
+                   <div className="w-full h-px bg-zinc-200 rounded-full my-2 opacity-50" />
+                 )}
+
+                 {/* Normal Row */}
+                 <div className="grid grid-cols-2 gap-4">
+                   {normalShops.map((shop) => (
+                     <Link href={`/shop/${shop.id}?lat=${coords[0]}&lng=${coords[1]}`} key={shop.id}>
+                       <div className="bg-white rounded-2xl shadow-sm border border-transparent overflow-hidden active:scale-[0.98] transition-transform flex flex-col h-40 relative group">
+                         
+                         <button onClick={(e) => toggleFavorite(e, shop.id)} className="absolute top-2 right-2 z-10 w-8 h-8 bg-white/80 backdrop-blur rounded-full flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Star size={16} className="text-zinc-400" />
+                         </button>
+
+                         <div className="h-20 w-full bg-zinc-100 flex items-center justify-center relative overflow-hidden shrink-0">
+                            {shop.image_url ? (
+                              <img src={shop.image_url} alt={shop.shop_name} className="w-full h-full object-cover" />
+                            ) : (
+                              <Store className="text-zinc-300" size={32} />
+                            )}
+                         </div>
+                         
+                         <div className="flex flex-col p-3 flex-1 justify-center bg-white">
+                           <h3 className="font-bold text-base text-zinc-900 truncate" dir="rtl">
+                             {shop.shop_name}
+                           </h3>
+                           <p className="text-[10px] text-zinc-400 font-medium uppercase tracking-widest mt-1">Epicerie</p>
+                         </div>
+                       </div>
+                     </Link>
+                   ))}
+                 </div>
+
+              </div>
             ) : (
-              <div className="text-center py-14 bg-white dark:bg-[#1a1c23] rounded-3xl border border-dashed border-zinc-200 dark:border-zinc-800 mt-2">
-                 <p className="text-zinc-500 font-bold text-lg pb-1" dir="rtl">لا توجد متاجر نشطة حالياً</p>
-                 <p className="text-zinc-400 text-sm font-medium">Aucune boutique pour le moment</p>
+              <div className="text-center py-20 bg-white rounded-2xl shadow-sm mt-2">
+                 <p className="text-zinc-500 font-bold text-lg pb-1" dir="rtl">لا توجد متاجر نشطة</p>
+                 <p className="text-zinc-400 text-sm font-medium">Boutiques indisponibles</p>
               </div>
             )}
           </div>
-        </main>
+        </div>
       )}
-    </div>
+    </>
   );
 }

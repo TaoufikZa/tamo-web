@@ -37,20 +37,20 @@ export default async function ShopPage(props: { params: Promise<{ id: string }> 
   } catch (e) {}
 
   return (
-    <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-[#0b0c10] font-sans pb-10">
-      <header className="bg-[#01432A] text-white pt-16 pb-6 px-4 rounded-b-[2.5rem] shadow-md z-10 sticky top-0 border-b border-[#015132]/50 flex items-center justify-between">
-        <Link href="/" className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm active:scale-95 transition-transform">
-          <ChevronLeft size={28} className="mr-1" />
+    <div className="flex flex-col flex-1 pb-10">
+      <header className="bg-white px-4 py-4 shadow-sm z-10 flex items-center justify-between mb-8">
+        <Link href="/" className="w-10 h-10 bg-[#F0F2F5] text-zinc-700 hover:bg-zinc-200 rounded-full flex items-center justify-center active:scale-95 transition-transform">
+          <ChevronLeft size={24} className="mr-0.5" />
         </Link>
-        <div className="flex flex-col items-center flex-1 pr-12">
-          <h1 className="text-xl font-black drop-shadow-sm line-clamp-2 text-center" dir="rtl">{shopName}</h1>
+        <div className="flex flex-col items-center flex-1 pr-10">
+          <h1 className="text-lg font-bold text-[#062C1E] line-clamp-1 text-center" dir="rtl">{shopName}</h1>
         </div>
       </header>
       
-      <main className="flex-1 w-full max-w-md mx-auto p-6 flex flex-col justify-center">
-        <div className="flex flex-col text-center w-full mb-10 text-zinc-500 dark:text-zinc-400">
-           <h2 className="text-xl font-bold text-zinc-800 dark:text-zinc-100 mb-2" dir="rtl">اضغط للتحدث</h2>
-           <p className="text-sm">Appuyez pour parler</p>
+      <main className="flex-1 w-full flex flex-col justify-center px-4">
+        <div className="flex flex-col text-center w-full mb-10 text-zinc-500">
+           <h2 className="text-xl font-black text-zinc-800 mb-2" dir="rtl">اضغط للتحدث</h2>
+           <p className="text-sm uppercase tracking-widest font-bold">Appuyez pour parler</p>
         </div>
         <VoiceRecorder shopId={id} customerId={customerId} />
       </main>

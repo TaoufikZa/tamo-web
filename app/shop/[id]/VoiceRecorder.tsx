@@ -156,12 +156,12 @@ export function VoiceRecorder({ shopId, customerId }: { shopId: string, customer
   if (isUploading) {
     return (
       <div className="flex flex-col items-center justify-center gap-6 mt-10">
-         <div className="w-32 h-32 bg-[#01432A]/10 dark:bg-[#2db37b]/20 rounded-full flex items-center justify-center animate-pulse">
-            <Loader2 size={48} className="text-[#01432A] dark:text-[#2db37b] animate-spin" />
+         <div className="w-32 h-32 bg-[#062C1E]/10 rounded-full flex items-center justify-center animate-pulse">
+            <Loader2 size={48} className="text-[#062C1E] animate-spin" />
          </div>
-         <div className="text-center font-medium text-zinc-600 dark:text-zinc-400">
-           <p dir="rtl" className="font-bold text-lg text-zinc-900 dark:text-zinc-100 mb-1">جاري إرسال طلبك...</p>
-           <p>Envoi de votre commande...</p>
+         <div className="text-center font-medium text-zinc-600">
+           <p dir="rtl" className="font-bold text-lg text-zinc-900 mb-1">جاري إرسال طلبك...</p>
+           <p className="text-xs uppercase tracking-widest font-bold">Envoi de votre commande...</p>
          </div>
       </div>
     )
@@ -171,29 +171,29 @@ export function VoiceRecorder({ shopId, customerId }: { shopId: string, customer
   if (isReviewing && audioUrl) {
     return (
       <div className="flex flex-col items-center justify-center w-full mt-8 animate-fade-in">
-        <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-6 drop-shadow-sm" dir="rtl">
+        <h2 className="text-xl font-bold text-[#062C1E] mb-6 drop-shadow-sm" dir="rtl">
           مراجعة الطلب
         </h2>
         
-        <div className="w-full bg-white dark:bg-[#1a1c23] p-4 rounded-3xl shadow-sm border border-zinc-200/80 dark:border-zinc-800 mb-10">
+        <div className="w-full bg-white p-4 rounded-2xl shadow-sm border border-transparent mb-10 overflow-hidden">
            <audio src={audioUrl} controls className="w-full outline-none" />
         </div>
 
-        <div className="flex w-full gap-4 px-2">
+        <div className="flex w-full gap-4">
            <button 
              onClick={handleDelete}
-             className="flex-1 flex flex-col items-center justify-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-900/20 dark:hover:bg-red-900/40 py-5 rounded-3xl transition-all active:scale-95 border border-red-100 dark:border-red-900/30"
+             className="flex-1 flex flex-col items-center justify-center gap-2 bg-white text-red-600 py-3 min-h-[56px] rounded-2xl transition-all active:scale-95 border border-zinc-200 shadow-sm"
            >
-             <Trash2 size={28} />
-             <span className="font-bold text-sm">إلغاء</span>
+             <Trash2 size={24} />
+             <span className="font-bold text-[10px] uppercase tracking-widest">إلغاء</span>
            </button>
            <button 
              onClick={confirmAndUpload}
-             className="flex-[2] flex flex-col items-center justify-center gap-2 bg-[#01432A] hover:bg-[#015132] text-white py-5 rounded-3xl transition-all shadow-lg active:scale-[0.98]"
+             className="flex-[2] flex flex-col items-center justify-center gap-2 bg-[#062C1E] hover:bg-[#093c2a] text-white py-3 min-h-[56px] rounded-2xl transition-all shadow-md active:scale-[0.98]"
            >
              <div className="flex items-center gap-2">
-               <span className="font-bold text-lg" dir="rtl">تأكيد وإرسال</span>
-               <Send size={24} className="ml-1" />
+               <span className="font-bold text-lg" dir="rtl">إرسال الطلب</span>
+               <Send size={20} className="ml-1" />
              </div>
            </button>
         </div>
@@ -217,7 +217,7 @@ export function VoiceRecorder({ shopId, customerId }: { shopId: string, customer
           className={`relative w-44 h-44 rounded-full flex items-center justify-center transition-all duration-300 shadow-2xl z-10 ${
             isRecording 
               ? 'bg-red-500 hover:bg-red-600 scale-[1.05]' 
-              : 'bg-[#01432A] hover:bg-[#015132] active:scale-95 shrink-0'
+              : 'bg-[#062C1E] hover:bg-[#093c2a] active:scale-95 shrink-0'
           }`}
         >
           {isRecording ? (

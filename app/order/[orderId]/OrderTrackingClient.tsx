@@ -98,16 +98,16 @@ export default function OrderTrackingClient({ initialOrder }: { initialOrder: Or
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-[#0b0c10] font-sans pb-12">
+    <div className="flex flex-col flex-1 pb-12">
       {/* Header */}
-      <header className="bg-white dark:bg-[#1a1c23] pt-14 pb-5 px-6 shadow-sm z-10 sticky top-0 border-b border-zinc-100 dark:border-zinc-800">
+      <header className="bg-white pt-4 pb-4 px-6 shadow-sm z-10 sticky top-[90px] border-b border-zinc-100">
         <div className="max-w-md mx-auto flex items-center justify-between">
-          <Link href="/" className="w-12 h-12 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center text-zinc-600 dark:text-zinc-300">
-             <ChevronLeft size={28} className="mr-1" />
+          <Link href="/" className="w-10 h-10 bg-[#F0F2F5] rounded-full flex items-center justify-center text-zinc-600 hover:bg-zinc-200 transition-colors">
+             <ChevronLeft size={24} className="mr-0.5" />
           </Link>
           <div className="flex flex-col items-end">
-            <h1 className="text-xl font-black text-zinc-900 dark:text-zinc-100" dir="rtl">تتبع الطلب</h1>
-            <p className="text-xs text-zinc-500 font-bold uppercase tracking-widest">Suivi de commande</p>
+            <h1 className="text-xl font-black text-[#062C1E]" dir="rtl">تتبع الطلب</h1>
+            <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Suivi de commande</p>
           </div>
         </div>
       </header>
@@ -115,20 +115,20 @@ export default function OrderTrackingClient({ initialOrder }: { initialOrder: Or
       <main className="flex-1 w-full max-w-md mx-auto px-6 pt-8 flex flex-col">
         
         {/* Shop Info Card */}
-        <div className="bg-white dark:bg-[#1a1c23] p-5 rounded-3xl shadow-sm border border-zinc-100 dark:border-zinc-800 flex items-center gap-4 mb-6 relative overflow-hidden">
-           <div className="w-14 h-14 bg-zinc-50 dark:bg-zinc-800/80 rounded-2xl flex items-center justify-center border border-zinc-100 dark:border-zinc-800 text-zinc-400">
-              <Store size={28} className="text-[#01432A]/50" />
+        <div className="bg-white p-5 rounded-2xl shadow-sm border border-transparent flex items-center gap-4 mb-6 relative overflow-hidden">
+           <div className="w-14 h-14 bg-zinc-50 rounded-2xl flex items-center justify-center border border-zinc-100 text-zinc-400">
+              <Store size={28} className="text-[#062C1E]/50" />
            </div>
            <div className="flex-1 flex flex-col items-end">
-             <span className="text-[10px] bg-[#01432A]/10 text-[#01432A] px-2 py-0.5 rounded-full font-bold mb-1">المتجر / Boutique</span>
-             <h3 className="font-bold text-lg text-zinc-900 dark:text-zinc-100" dir="rtl">
+             <span className="text-[10px] bg-[#062C1E]/10 text-[#062C1E] px-2 py-0.5 rounded-full font-bold mb-1">المتجر / Boutique</span>
+             <h3 className="font-bold text-lg text-zinc-900" dir="rtl">
                {order.shops?.shop_name || 'Boutique'}
              </h3>
            </div>
         </div>
 
         {/* Audio Content Review (Card) */}
-        <div className="bg-[#01432A] rounded-3xl p-6 text-white shadow-xl shadow-[#01432A]/20 relative overflow-hidden mb-8">
+        <div className="bg-[#062C1E] rounded-2xl p-6 text-white shadow-xl shadow-[#062C1E]/20 relative overflow-hidden mb-8">
            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-bl-full -z-0" />
            
            <div className="relative z-10 flex flex-col items-center gap-5">
@@ -176,27 +176,27 @@ export default function OrderTrackingClient({ initialOrder }: { initialOrder: Or
                     </div>
                  </div>
 
-                 <div className="flex w-full gap-4 px-2">
+                 <div className="flex w-full gap-4">
                     <button 
                       onClick={() => handlePriceAction('declined')}
                       disabled={isUpdating}
-                      className="flex-1 flex flex-col items-center justify-center gap-2 bg-red-100 hover:bg-red-200 text-red-600 font-bold py-5 rounded-3xl active:scale-95 transition-all"
+                      className="flex-1 flex flex-col items-center justify-center gap-2 bg-white border border-zinc-200 hover:bg-red-50 text-red-600 font-bold min-h-[56px] rounded-2xl active:scale-95 transition-all shadow-sm"
                     >
-                      <XCircle size={28} />
-                      <span className="text-sm">إلغاء</span>
+                      <XCircle size={24} />
+                      <span className="text-[10px] uppercase tracking-widest">إلغاء</span>
                     </button>
                     
                     <button 
                       onClick={() => handlePriceAction('confirmed')}
                       disabled={isUpdating}
-                      className="flex-[2] flex flex-col items-center gap-2 bg-[#01432A] hover:bg-[#015132] text-white py-5 rounded-3xl shadow-xl active:scale-95 transition-all relative overflow-hidden"
+                      className="flex-[2] flex flex-col items-center justify-center gap-2 bg-[#062C1E] hover:bg-[#093c2a] text-white min-h-[56px] rounded-2xl shadow-md active:scale-95 transition-all relative overflow-hidden"
                     >
                        {isUpdating ? (
                          <Loader2 size={24} className="animate-spin" />
                        ) : (
                          <div className="flex items-center gap-3">
-                           <span className="text-xl font-black" dir="rtl">تأكيد الطلب</span>
-                           <CheckCircle2 size={24} className="text-[#a3ff12]" />
+                           <span className="text-lg font-black" dir="rtl">تأكيد الطلب</span>
+                           <CheckCircle2 size={20} className="text-[#a3ff12] ml-1" />
                          </div>
                        )}
                     </button>
