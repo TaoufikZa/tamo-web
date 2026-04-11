@@ -22,11 +22,13 @@ export default function RootLayout({
         {/* Global Persistent Header */}
         <header className="fixed top-0 inset-x-0 h-[90px] bg-[#062C1E] text-white shadow-md z-[9999] flex flex-col items-center justify-center border-b border-[#015132]/50">
            <Link href="/">
-             <div className="flex flex-col items-center gap-1 transform active:scale-95 transition-transform">
-               <div className="font-black text-4xl text-[#a3ff12] tracking-tighter leading-none mt-1">
-                 tamo
-               </div>
-               <p className="text-[10px] font-bold tracking-widest text-white uppercase leading-tight font-sans">
+             <div className="flex flex-col items-center gap-1.5 transform active:scale-95 transition-transform">
+               <img 
+                 src="/logo.png" 
+                 alt="Tamo Logo" 
+                 className="h-10 w-auto object-contain mt-1"
+               />
+               <p className="text-[10px] font-bold tracking-[0.2em] text-white uppercase leading-tight font-sans">
                  JUST SPEAK IT | أطلبها بصوتك
                </p>
              </div>
